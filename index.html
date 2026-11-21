@@ -872,13 +872,13 @@ function mesajEroare(e) {
   return "A apărut o eroare neașteptată: " + (e && e.message ? e.message : e);
 }
 
-// Rulează o acțiune cu butoanele de sus blocate; la final le deblochează MEREU
+// Rulează o acțiune. Butoanele rămân MEREU libere: dacă apeși din nou (altă rază, altă zonă),
+// căutarea nouă o înlocuiește pe cea veche, iar răspunsul întârziat al celei vechi e ignorat.
+let idRulare = 0;
 async function ruleaza(actiune) {
-  if (ocupat) return;
-  ocupat = true; blocheaza(true);
+  const eu = ++idRulare;
   try { await actiune(); }
-  catch (e) { setStare(mesajEroare(e), "eroare"); }
-  finally { ocupat = false; blocheaza(false); }
+  catch (e) { if (eu === idRulare) setStare(mesajEroare(e), "eroare"); }
 }
 
 // Raza aleasă (din listă sau scrisă de utilizator), în metri
@@ -905,8 +905,11 @@ function aplicaLocuri(lista, esteComplet) {
 }
 
 // Căutarea principală. forteaza = ignoră memoria și cere date noi.
+let cronometruActiv = null;
 async function cautaLocuri(forteaza) {
   const raza = razaCurenta();
+  const aceasta = ++numarCautare;          // ca un răspuns întârziat să nu strice o căutare mai nouă
+  clearInterval(cronometruActiv);          // oprește cronometrul căutării vechi
   el.alegere.innerHTML = ""; el.roata.innerHTML = "";
   salveazaPreferinte();
 
@@ -920,7 +923,6 @@ async function cautaLocuri(forteaza) {
 
   // 2) Lista rapidă (sub o secundă), cât timp serverul mare lucrează
   const punct = centru;
-  const aceasta = ++numarCautare;          // ca un răspuns întârziat să nu strice o căutare mai nouă
   let arataRapid = false;
   aplicaLocuri([], false);
   cereLocuriRapide(punct, raza).then(lista => {
@@ -932,13 +934,14 @@ async function cautaLocuri(forteaza) {
   // 3) Lista completă (program, telefon…) de la serverul mare, cu un cronometru ca să știi că lucrează
   const start = Date.now();
   const actualizeaza = () => {
+    if (aceasta !== numarCautare) return;
     const s = Math.round((Date.now() - start) / 1000);
     setStare((arataRapid ? "Am afișat cele mai apropiate " + toateLocurile.length + " locuri (lista de bază). " : "") +
              "Încarc programul, telefoanele și restul locurilor… " + s + " s" +
              (s >= 8 ? " (serverul gratuit e aglomerat, poate dura până la un minut)" : ""), "info");
   };
   actualizeaza();
-  const cronometru = setInterval(actualizeaza, 1000);
+  const cronometru = cronometruActiv = setInterval(actualizeaza, 1000);
   let r;
   try {
     r = await cereOverpass(construiesteInterogare(punct.lat, punct.lon, raza));
