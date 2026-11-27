@@ -2,31 +2,53 @@
 <html lang="ro">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <title>Unde mănânc în apropiere</title>
+<link rel="preconnect" href="https://overpass-api.de" crossorigin>
+<script>
+/* Tema (zi/noapte) se alege înainte să se deseneze pagina, ca să nu clipească.
+   Auto = ca setarea telefonului, iar seara (20:00–06:00) trece singură pe noapte. */
+(function () {
+  function mod() { try { return JSON.parse(localStorage.getItem("mancare_v1_tema")) || "auto"; } catch (e) { return "auto"; } }
+  window.temaEfectiva = function () {
+    const m = mod();
+    if (m === "zi" || m === "noapte") return m;
+    const sistem = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const h = new Date().getHours();
+    return (sistem || h >= 20 || h < 6) ? "noapte" : "zi";
+  };
+  window.aplicaTema = function () {
+    const t = window.temaEfectiva();
+    document.documentElement.setAttribute("data-tema", t);
+    document.documentElement.style.colorScheme = t === "noapte" ? "dark" : "light";
+  };
+  window.aplicaTema();
+})();
+</script>
 <style>
   /* =====================================================================
      ASPECT (CSS) – gândit întâi pentru telefon. Culorile sunt variabile,
      ca modul întunecat să le schimbe dintr-un singur loc.
      ===================================================================== */
   :root {
-    /* Glazură de ceramică: alb-porțelan, albastru cobalt, turcoaz, roșu de bol (ca la faianța din Istanbul și majolica italiană) */
-    --fundal: #eef3f2; --card: #fff; --text: #14233b; --slab: #566679; --chenar: #c6d3d9;
-    --verde: #1c47a8; --verde-deschis: #e3eaf8; --gri: #e9eff3; --link: #1c47a8;
-    --ok: #0f7471; --rau: #a93a24; --portocaliu: #b8660f; --rosu-foame: #c23b22;
-    --info: #e6eefa; --succes: #e2f3ef; --eroare: #fbe9e5; --atentie: #fff4d6;
-    --turcoaz: #0f7471; --bol: #c23b22;
-    --serif: ui-serif, "New York", "Iowan Old Style", Georgia, "Times New Roman", serif;
+    /* Paletă caldă și liniștită: nisip, salvie, caisă, ceață; o singură picătură de portocaliu */
+    --fundal: #f3eee6; --card: #fffbf5; --text: #2b2a26; --slab: #5e5a50; --chenar: #d8cfbf;
+    --verde: #3a4636; --verde-deschis: #e3e9d6; --gri: #ece5d8; --link: #2f5d3f;
+    --ok: #2f6b45; --rau: #a23b25; --portocaliu: #a5521a; --rosu-foame: #b84a25;
+    --info: #e8eddd; --succes: #e2eedd; --eroare: #f6e0d8; --atentie: #f7ebcb;
+    --turcoaz: #3e7d4f; --bol: #d9693f; --gf-text: #fff;
+    --serif: ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --p1: #bfcdaa; --t1: #26301f; --p2: #f1cfa6; --t2: #3a2412; --p3: #b9cccb; --t3: #1d3333; --p4: #e6d9b8; --t4: #3a3015;
+    --sus: 0px; --camp: #8a8170;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --fundal: #0d1524; --card: #152036; --text: #e6ecf7; --slab: #9fb0c8; --chenar: #2b3957;
-      --verde: #3a66d6; --verde-deschis: #1b2c52; --gri: #1e2b45; --link: #93b2ff;
-      --ok: #4fd1c5; --rau: #ff8f7a; --portocaliu: #e0903a; --rosu-foame: #d4472d;
-      --info: #172a4a; --succes: #0f2f31; --eroare: #3a1a18; --atentie: #352c12;
-      --turcoaz: #4fd1c5; --bol: #e5624a;
-    }
+  html[data-tema="noapte"] {
+    --fundal: #1f1d19; --card: #2a2722; --text: #f0eadf; --slab: #b8b0a0; --chenar: #403b33;
+    --verde: #4b7358; --verde-deschis: #2f3a2e; --gri: #35312a; --link: #a9cdb0;
+    --ok: #9ad0a8; --rau: #ff9c84; --portocaliu: #e0a060; --rosu-foame: #b84a25;
+    --info: #2a3329; --succes: #26352b; --eroare: #3f2a24; --atentie: #3a3320;
+    --turcoaz: #8cc79b; --bol: #e8805a; --gf-text: #10240f;
+    --camp: #8d8573; --p1: #3c4a37; --t1: #e4edd6; --p2: #5a4128; --t2: #f6dec2; --p3: #2f4545; --t3: #d3e6e5; --p4: #4d4630; --t4: #efe6c6;
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }   /* ce e ascuns rămâne ascuns, orice alt stil ar avea */
@@ -36,15 +58,16 @@
   :focus-visible { outline: 3px solid #f0a500; outline-offset: 2px; }
   .sari { position: absolute; left: -999px; }
   .sari:focus { left: 8px; top: 8px; z-index: 99; background: var(--card); padding: 8px; }
-  header { background: var(--card); border-bottom: 1px solid var(--chenar); padding: 0 0 14px; }
-  .tigla { height: 14px; margin-bottom: 12px;
-           background-color: var(--card);
-           background-image: radial-gradient(circle at 50% 50%, var(--bol) 0 2.2px, transparent 2.6px),
-                             conic-gradient(from 45deg at 50% 50%, var(--verde) 0 25%, var(--turcoaz) 0 50%, var(--verde) 0 75%, var(--turcoaz) 0);
-           background-size: 14px 14px; }
-  header .in { max-width: 760px; margin: 0 auto; padding: 0 12px; }
-  header h1 { margin: 0 0 2px; font: 700 1.75rem/1.15 var(--serif); letter-spacing: -.01em; }
-  header p { margin: 0; font-size: .9rem; color: var(--slab); }
+  header { position: sticky; top: 0; z-index: 20; background: var(--fundal); padding: calc(10px + env(safe-area-inset-top)) 0 6px; }
+  header .in { max-width: 760px; margin: 0 auto; padding: 0 14px; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  header h1 { margin: 0; font: 800 var(--t, 2.6rem)/0.95 var(--serif); letter-spacing: -.04em; }
+  header h1 span { color: var(--bol); }
+  header p { margin: 6px 0 0; font-size: .9rem; color: var(--slab); }
+  header.mica p { display: none; }
+  #btnTema { flex: none; background: transparent; color: var(--text); border: 2px solid var(--text); border-radius: 22px; padding: 4px 14px; min-height: 44px; font-size: 14px; }
+  #banda { position: sticky; top: var(--antet, 70px); z-index: 19; overflow: hidden; white-space: nowrap; background: var(--verde-deschis); color: var(--text); padding: 10px 0; font-weight: 600; font-size: .95rem; }
+  #banda .in2 { display: inline-block; will-change: transform; }
+  #banda .in2 span { display: inline-block; padding-right: 2.2em; }
   main { max-width: 760px; margin: 0 auto; padding: 12px; }
   .panou, .filtre, .loc { background: var(--card); border: 1px solid var(--chenar); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
   .loc { border-radius: 8px; border-left: 5px solid var(--chenar); }
@@ -55,7 +78,7 @@
   button.secundar { background: transparent; color: var(--link); border: 1px solid var(--chenar); }
   button, select, input[type=text], input[type=search], input[type=time] { min-height: 44px; font-size: 16px; }
   input[type=text], input[type=search], input[type=time], select, textarea {
-    font: inherit; font-size: 16px; padding: 9px; border: 1px solid var(--chenar);
+    font: inherit; font-size: 16px; padding: 9px; border: 1px solid var(--camp);
     border-radius: 8px; background: var(--card); color: var(--text); max-width: 100%; }
   input::placeholder, textarea::placeholder { color: var(--slab); }
   input[type=text] { flex: 1; min-width: 0; }
@@ -67,7 +90,7 @@
   .metri { display: inline-flex; align-items: center; gap: 6px; }
   .metri input { width: 110px; flex: none; }
 
-  #btnFoame { background: var(--rosu-foame); font-weight: 700; font-size: 1.1rem; }
+  #btnFoame { background: var(--rosu-foame); color: #fff; font-weight: 700; font-size: 1.1rem; }
   #retea { display: none; padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; background: var(--atentie); }
   #retea.vizibil { display: block; }
   #stare { padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; display: none; }
@@ -80,13 +103,13 @@
                      background: var(--verde-deschis); color: var(--text); }
 
   /* Filtrele rămân sus când derulezi lista (doar când sunt strânse) */
-  .filtre { position: sticky; top: 0; z-index: 5; }
+  .filtre { position: sticky; top: var(--sus); z-index: 5; }
   .filtre:has(details[open]) { position: static; }
   .cerere { font-size: 1.1rem; line-height: 1.5; margin: 10px 0; padding: 12px 14px; border-left: 4px solid var(--verde); background: var(--gri); border-radius: 8px; }
   #ghidCerere summary { cursor: pointer; padding: 8px 0; color: var(--link); font-weight: 600; min-height: 32px; }
   .filtre details summary { cursor: pointer; padding: 8px 0 2px; color: var(--link); font-weight: 600; min-height: 32px; }
-  .bife-filtre { display: flex; flex-wrap: wrap; gap: 4px 16px; }
-  .bife-filtre label { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+  .bife-filtre { display: flex; flex-wrap: nowrap; gap: 8px; overflow-x: auto; padding: 2px 0 4px; }
+  .bife-filtre label { display: flex; align-items: center; gap: 8px; min-height: 44px; flex: none; white-space: nowrap; padding: 0 12px; border: 1px solid var(--camp); border-radius: 99px; }
   .grila { display: grid; grid-template-columns: auto 1fr; gap: 8px 10px; align-items: center; margin: 8px 0; }
   .grila select, .grila input[type=time] { width: 100%; }
   .chips { display: flex; gap: 6px; overflow-x: auto; padding: 8px 0 4px; -webkit-overflow-scrolling: touch; }
@@ -111,8 +134,7 @@
   .inchis { color: var(--rau); font-weight: 600; }
   .bife { margin-top: 4px; }
   .bife span { font-size: .78rem; background: var(--gri); padding: 2px 8px; border-radius: 6px; margin: 0 4px 3px 0; display: inline-block; }
-  .bife span.gf { background: var(--turcoaz); color: #fff; font-weight: 600; }
-  @media (prefers-color-scheme: dark) { .bife span.gf { color: #06201f; } }
+  .bife span.gf { background: var(--verde-deschis); color: var(--ok); font-weight: 600; }
   .nota { margin-top: 6px; padding: 6px 8px; border-left: 3px solid #e0a800; background: var(--atentie); border-radius: 4px; white-space: pre-wrap; }
   .linkuri, .actiuni { margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; }
   .buton-link { display: inline-flex; align-items: center; min-height: 40px; padding: 6px 14px; border-radius: 10px;
@@ -145,24 +167,104 @@
   footer { max-width: 760px; margin: 0 auto; padding: 4px 12px 24px; font-size: .8rem; color: var(--slab); }
   @media (max-width: 480px) {
     main { padding: 8px; }
-    header h1 { font-size: 1.15rem; }
     #btnGps, #btnFoame, #btnSurpriza, #btnFavorite, #btnTrimiteApp, #btnGluten { width: 100%; }
+  }
+
+  /* ===== Aspect „Afiș cald”: carduri cu distanța mare, culori liniștite ===== */
+  body { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+  .panou, .filtre, .loc { border-radius: 22px; border-color: var(--chenar); }
+  .loc { border-left-width: 1px; padding: 16px; }
+  .loc:has(.deschis) { border-left-color: var(--chenar); }
+  #lista > .loc:nth-child(4n+1), #alegere > .loc:nth-child(4n+1), #panouFavorite .loc:nth-child(4n+1) { --p: var(--p1); --pt: var(--t1); }
+  #lista > .loc:nth-child(4n+2), #alegere > .loc:nth-child(4n+2), #panouFavorite .loc:nth-child(4n+2) { --p: var(--p2); --pt: var(--t2); }
+  #lista > .loc:nth-child(4n+3), #alegere > .loc:nth-child(4n+3), #panouFavorite .loc:nth-child(4n+3) { --p: var(--p3); --pt: var(--t3); }
+  #lista > .loc:nth-child(4n+4), #alegere > .loc:nth-child(4n+4), #panouFavorite .loc:nth-child(4n+4) { --p: var(--p4); --pt: var(--t4); }
+  .loc { --p: var(--p1); --pt: var(--t1); }
+  .cap { align-items: center; gap: 12px; }
+  .cap .num { flex: none; min-width: 78px; text-align: center; padding: 8px 10px 6px; border-radius: 18px; background: var(--p); color: var(--pt); }
+  .cap .num b { display: block; font: 800 1.9rem/1 var(--serif); letter-spacing: -.05em; font-variant-numeric: tabular-nums; }
+  .cap .num small { font-size: .72rem; font-weight: 600; }
+  .cap h3 { flex: 1; min-width: 0; font: 700 1.2rem/1.2 var(--serif); }
+  .cap .puncte, .cap .dist { display: none; }
+  .spic { display: inline-flex; vertical-align: middle; margin-left: 6px; color: var(--ok); }
+  .revsum { display: inline-block; margin: 6px 0 0; padding: 4px 12px; border-radius: 99px; font-size: .85rem; font-weight: 600; background: var(--gri); }
+  .revsum.v-sigur { background: var(--p1); color: var(--t1); }
+  .revsum.v-grija { background: var(--p4); color: var(--t4); }
+  .revsum.v-nu { background: var(--p2); color: var(--t2); }
+  .rev-box { padding: 10px 0 0; }
+  .stele { display: flex; gap: 2px; margin: 2px 0 8px; }
+  .stele .st { background: transparent; color: var(--chenar); font-size: 2rem; padding: 0; min-width: 48px; min-height: 48px; line-height: 1; }
+  .stele .st[aria-pressed="true"] { color: #e0a800; }
+  .verd { display: flex; gap: 8px; margin: 2px 0 8px; }
+  .verd button { flex: 1; min-height: 52px; background: transparent; color: var(--text); border: 2px solid var(--camp); font-size: .9rem; padding: 6px; }
+  .verd button[aria-pressed="true"] { border-color: var(--text); font-weight: 800; }
+  .verd button[data-v="sigur"][aria-pressed="true"] { background: var(--p1); color: var(--t1); }
+  .verd button[data-v="grija"][aria-pressed="true"] { background: var(--p4); color: var(--t4); }
+  .verd button[data-v="nu"][aria-pressed="true"] { background: var(--p2); color: var(--t2); }
+  .jurnal { position: relative; padding-left: 28px; }
+  .jurnal::before { content: ""; position: absolute; left: 9px; top: 6px; bottom: 6px; width: 4px; border-radius: 2px; background: var(--chenar); }
+  .jurnal li { position: relative; margin-bottom: 14px; }
+  .jurnal li::before { content: ""; position: absolute; left: -26px; top: 18px; width: 14px; height: 14px; border-radius: 50%; background: var(--bol); border: 3px solid var(--fundal); box-sizing: content-box; }
+  .jurnal .loc { margin-bottom: 0; }
+
+  /* Bara de jos: butoanele importante la îndemâna degetului mare */
+  #bara { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; background: var(--card); border-top: 1px solid var(--chenar);
+          padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); display: flex; gap: 6px; justify-content: center; }
+  #bara button { flex: 1; max-width: 180px; background: transparent; color: var(--text); border-radius: 14px; min-height: 56px; padding: 4px 2px;
+                 display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: .78rem; font-weight: 600; }
+  #bara button span { font-size: 1.35rem; line-height: 1; }
+  #bara button.foame { background: var(--rosu-foame); color: #fff; }
+  #bara button[aria-expanded="true"] { background: var(--verde-deschis); }
+  @media (max-width: 600px) { .panou > .rand:first-child { display: none; } }
+
+  /* Panoul de căutare se strânge într-o linie după ce ai rezultate */
+  .linie { display: none; align-items: center; gap: 10px; }
+  #textLinie { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #panouCautare.strans { padding: 8px 12px; }
+  #panouCautare.strans .linie { display: flex; }
+  #panouCautare.strans > .sau, #panouCautare.strans > #formZona, #panouCautare.strans > .rand:has(#raza),
+  #panouCautare.strans > .rand:has(#btnFoame), #panouCautare.strans > #notaRaza, #panouCautare.strans > #ghidCerere { display: none; }
+  #panouCautare.strans > .rand:has(#btnGluten) { flex-wrap: nowrap; overflow-x: auto; margin: 6px 0 0; padding-bottom: 2px; }
+  #panouCautare.strans #btnFavorite, #panouCautare.strans #btnGluten, #panouCautare.strans #btnTrimiteApp {
+    width: auto; flex: none; font-size: 14px; padding: 6px 12px; white-space: nowrap; }
+
+  /* Mesaj despre țară (Italia / Turcia) */
+  #bannerTara { padding: 4px 14px; }
+  #bannerTara summary { cursor: pointer; font-weight: 700; min-height: 44px; display: flex; align-items: center; color: var(--link); }
+  #bannerTara .cerere { font-size: 1.05rem; }
+  .filtre { position: static; }
+  #lista, #foame, #alegere, #panouFavorite, #panouJurnal, #bannerTara { scroll-margin-top: calc(var(--sus) + 8px); }
+
+  /* Mișcare: intrarea cardurilor (oprită când telefonul cere „reduce mișcarea”) */
+  .anim #lista > .loc { transition: opacity .5s ease, transform .5s ease; }
+  .anim #lista > .loc:not(.vazut) { opacity: 0; transform: translateY(26px) scale(.98); }
+  @media (prefers-reduced-motion: reduce) {
+    #banda .in2 { transform: none !important; }
+    .anim #lista > .loc:not(.vazut) { opacity: 1; transform: none; }
+    * { scroll-behavior: auto !important; }
   }
 </style>
 </head>
 <body>
 <a class="sari" href="#lista">Sari la rezultate</a>
 
-<header>
-  <div class="tigla" aria-hidden="true"></div>
+<header id="antet">
   <div class="in">
-    <h1>Unde mănânc în apropiere</h1>
-    <p>Restaurante, cafenele și patiserii din jurul tău, inclusiv locuri fără gluten.</p>
+    <div>
+      <h1>Mănânc<span>.</span></h1>
+      <p>Unde mănânc în apropiere: restaurante, cafenele și patiserii.</p>
+    </div>
+    <button id="btnTema" type="button" aria-label="Schimbă tema: automat, zi sau noapte">Auto</button>
   </div>
 </header>
+<div id="banda" aria-hidden="true"><div class="in2" id="bandaText"><span>aproape de tine</span><span>aproape de tine</span><span>aproape de tine</span><span>aproape de tine</span></div></div>
 
 <main>
-  <section class="panou" aria-label="Căutare">
+  <section class="panou" id="panouCautare" aria-label="Căutare">
+    <div id="linieCautare" class="linie">
+      <span id="textLinie"></span>
+      <button id="btnSchimba" class="secundar" type="button" aria-expanded="false">Schimbă</button>
+    </div>
     <div class="rand">
       <button id="btnFoame" type="button">🔥 Mi-e foame ACUM</button>
       <button id="btnGps" type="button">📍 Folosește locația mea</button>
@@ -222,12 +324,23 @@
 
   <div id="retea" role="status"></div>
   <div id="stare" role="status" aria-live="polite"></div>
+  <section id="bannerTara" class="panou" hidden aria-label="Cerere pentru personal">
+    <details id="detaliiTara">
+      <summary id="titluTara"></summary>
+      <blockquote id="textTara" class="cerere"></blockquote>
+      <div class="rand">
+        <button id="btnCopiazaTara" type="button" class="secundar">Copiază textul</button>
+        <button id="btnAscundeTara" type="button" class="secundar">Ascunde</button>
+      </div>
+    </details>
+  </section>
   <div class="rand" id="randActiuni" hidden>
     <button id="btnRefresh" class="secundar" type="button">🔄 Reîmprospătează</button>
     <button id="btnHarta" class="secundar" type="button" aria-expanded="false">🗺️ Arată harta</button>
   </div>
   <div id="sugestii" class="panou" hidden></div>
   <section id="panouFavorite" hidden aria-label="Favoritele mele"></section>
+  <section id="panouJurnal" hidden aria-label="Jurnalul meu de mese"></section>
   <div id="foame" aria-live="polite"></div>
   <div id="zonaHarta" hidden>
     <div id="harta" role="region" aria-label="Harta locurilor"></div>
@@ -296,6 +409,13 @@
 <footer>
   © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>
 </footer>
+
+<nav id="bara" aria-label="Acțiuni rapide">
+  <button type="button" class="foame" id="bFoame"><span aria-hidden="true">🔥</span>Mi-e foame</button>
+  <button type="button" id="bGps"><span aria-hidden="true">📍</span>Lângă mine</button>
+  <button type="button" id="bFav" aria-expanded="false"><span aria-hidden="true">⭐</span>Favorite</button>
+  <button type="button" id="bJurnal" aria-expanded="false"><span aria-hidden="true">📒</span>Jurnal</button>
+</nav>
 
 <script>
 "use strict";
@@ -744,6 +864,10 @@ function gasesteInMemorie(c, raza, varstaMaxima) {
 // Favorite și notițe (rămân în acest browser)
 let favorite = citesteStocat("favorite") || {};
 let notite = citesteStocat("notite") || {};
+let recenzii = citesteStocat("recenzii") || {};      // {id: {r: 1-5, v: "sigur"|"grija"|"nu", t, nume, categorie}}
+const NUME_VERDICT = { sigur: "Da, sigur", grija: "Cu grijă", nu: "Nu a fost" };
+const linkRecenzii = l => "https://www.google.com/maps/search/?api=1&query=" +
+  encodeURIComponent((l.nume ? l.nume + " " : "") + (l.adresa ? l.adresa : l.lat.toFixed(5) + "," + l.lon.toFixed(5)));
 const esteFavorit = id => !!favorite[id];
 
 
@@ -910,7 +1034,8 @@ const el = {
   filtre: $("filtre"), fText: $("fText"), chips: $("chips"), fDeschis: $("fDeschis"), textDeschis: $("textDeschis"),
   fFav: $("fFav"), fGluten: $("fGluten"), notaGluten: $("notaGluten"), btnGluten: $("btnGluten"), ghidCerere: $("ghidCerere"), limbaCerere: $("limbaCerere"), textCerere: $("textCerere"), btnCopiazaCerere: $("btnCopiazaCerere"), fCand: $("fCand"), fOra: $("fOra"), fSort: $("fSort"), fTip: $("fTip"), fDist: $("fDist"),
   grupDist: $("grupDist"), fDistAlta: $("fDistAlta"), randSurpriza: $("randSurpriza"), btnSurpriza: $("btnSurpriza"),
-  roata: $("roata"), alegere: $("alegere"), lista: $("lista"), btnMai: $("btnMai")
+  roata: $("roata"), alegere: $("alegere"), lista: $("lista"), btnMai: $("btnMai"),
+  panouJurnal: $("panouJurnal"), bannerTara: $("bannerTara"), titluTara: $("titluTara"), textTara: $("textTara")
 };
 
 const PE_PAGINA = 50;
@@ -977,6 +1102,8 @@ function aplicaLocuri(lista, esteComplet) {
   el.randActiuni.hidden = false;
   if (are) construiesteFiltre();
   afiseaza();
+  actualizeazaTara();
+  if (are) streangeCautarea(); else if (esteComplet) deschideCautarea();
 }
 
 // Căutarea principală. forteaza = ignoră memoria și cere date noi.
@@ -1147,23 +1274,28 @@ function cardLoc(l, acum, cuId) {
     const tel = l.telefon.split(";")[0].replace(/[^0-9+]/g, "");
     if (tel) butoane += '<a class="buton-link sun" href="tel:' + esc(tel) + '">📞 Sună</a>';
   }
-  butoane += '<a class="buton-link" href="' + esc(linkNavigare(l)) + '" target="_blank" rel="noopener noreferrer">🧭 Navigare</a>' +
+  butoane += '<a class="buton-link" href="' + esc(linkRecenzii(l)) + '" target="_blank" rel="noopener noreferrer">⭐ Recenzii pe Google</a>' +
+             '<a class="buton-link" href="' + esc(linkNavigare(l)) + '" target="_blank" rel="noopener noreferrer">🧭 Navigare</a>' +
              '<a class="buton-link" href="' + esc(linkHarta(l)) + '" target="_blank" rel="noopener noreferrer">🗺️ Hartă</a>';
   const site = l.site ? urlSigur(l.site) : null;
   if (site) butoane += '<a class="buton-link" href="' + esc(site) + '" target="_blank" rel="noopener noreferrer">🌐 Site</a>';
 
   const lipsa = !l.previzualizare && (!l.program || !l.adresa);
-  const dist = isFinite(l.distanta)
-    ? '<span class="puncte" aria-hidden="true"></span><span class="dist">' + formatDistanta(l.distanta) + "</span>"
+  const dm = isFinite(l.distanta) ? formatDistanta(l.distanta).split(" ") : null;
+  const dist = dm ? '<div class="num"><b>' + esc(dm[0]) + "</b><small>" + esc(dm[1]) + "</small></div>" : "";
+  const rv = recenzii[l.id];
+  const spic = l.gluten >= 1
+    ? ' <span class="spic" role="img" aria-label="Opțiuni fără gluten, după OpenStreetMap"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22V6M12 10c-3.2 0-4.5-2-4.5-4.5 3.2 0 4.5 2 4.5 4.5zm0 5c-3.2 0-4.5-2-4.5-4.5m4.5 4.5c3.2 0 4.5-2 4.5-4.5m-4.5 4.5c3.2 0 4.5-2 4.5-4.5M12 10c3.2 0 4.5-2 4.5-4.5-3.2 0-4.5 2-4.5 4.5z"/></svg></span>'
     : "";
+  const revTxt = rv ? '<div class="revsum v-' + esc(rv.v || "") + '">★ ' + esc(rv.r) + " din 5" + (rv.v ? " · " + esc(NUME_VERDICT[rv.v] || "") : "") + "</div>" : "";
   const peJos = isFinite(l.distanta) && textPeJos(l.distanta) ? '<div class="mic">' + textPeJos(l.distanta) + "</div>" : "";
 
   return '<li class="loc' + (l.previzualizare ? " previzualizare" : "") + '"' + (cuId ? ' id="' + idDom(l.id) + '"' : "") +
     ' data-id="' + esc(l.id) + '">' +
-    '<div class="cap"><h3>' + nume + "</h3>" + dist +
+    '<div class="cap">' + dist + "<h3>" + nume + "</h3>" +
     '<button type="button" class="stea" data-act="fav" aria-pressed="' + fav + '" aria-label="' +
       (fav ? "Scoate de la favorite" : "Adaugă la favorite") + '">' + (fav ? "★" : "☆") + "</button></div>" +
-    '<div class="tip"><span class="eticheta">' + esc(l.categorie) + "</span></div>" +
+    '<div class="tip"><span class="eticheta">' + esc(l.categorie) + "</span>" + spic + "</div>" + revTxt +
     peJos +
     "<div>📍 " + adr + "</div>" +
     (l.bucatarie ? '<div class="mic">Bucătărie: ' + esc(l.bucatarie) + "</div>" : "") +
@@ -1174,6 +1306,7 @@ function cardLoc(l, acum, cuId) {
     (nota ? '<div class="nota">📝 ' + esc(nota) + "</div>" : "") +
     '<div class="linkuri">' + butoane + "</div>" +
     '<div class="actiuni">' +
+      '<button type="button" data-act="rev">⭐ ' + (rv ? "Nota mea" : "Dă o notă") + "</button>" +
       '<button type="button" data-act="nota">📝 ' + (nota ? "Editează notița" : "Notiță") + "</button>" +
       '<button type="button" data-act="trimite">📤 Trimite</button>' +
       '<a href="' + esc(linkEditare(l)) + '" target="_blank" rel="noopener noreferrer" title="Necesită un cont gratuit OpenStreetMap">✏️ ' +
@@ -1192,12 +1325,15 @@ function afiseaza() {
     el.lista.innerHTML = '<li class="loc">Niciun loc nu se potrivește cu ce ai ales. Schimbă căutarea sau filtrele.</li>';
   }
   actualizeazaHarta(potrivite);
+  actualizeazaBanda(potrivite, acum);
+  observaCarduri();
 }
 
 // Redesenează tot ce arată carduri (după o schimbare de favorite/notițe)
 function reafiseazaTot() {
   afiseaza();
   if (!el.panouFavorite.hidden) arataFavorite();
+  if (!el.panouJurnal.hidden) arataJurnal();
   // Cardurile separate („Mi-e foame”, roata): actualizăm doar steaua
   for (const b of document.querySelectorAll("#foame .stea, #alegere .stea")) {
     const fav = esteFavorit(b.closest(".loc").dataset.id);
@@ -1259,6 +1395,47 @@ document.addEventListener("click", async ev => {
     const ta = extra.querySelector("textarea");
     ta.value = notite[l.id] || "";
     ta.focus();
+  }
+  else if (act === "rev") {
+    if (extra.dataset.deschis === "rev") { extra.innerHTML = ""; extra.dataset.deschis = ""; return; }
+    extra.dataset.deschis = "rev";
+    const rv = recenzii[l.id] || {};
+    extra.dataset.r = rv.r || 0; extra.dataset.v = rv.v || "";
+    const id = esc(idDom(l.id));
+    extra.innerHTML = '<div class="rev-box"><div class="mic">Nota ta (rămâne doar pe telefonul tău)</div>' +
+      '<div class="stele" role="group" aria-label="Nota de la 1 la 5">' +
+      [1, 2, 3, 4, 5].map(n => '<button type="button" class="st" data-act="rev-n" data-n="' + n + '" aria-label="' + n + ' din 5" aria-pressed="' + (n <= (rv.r || 0)) + '">★</button>').join("") +
+      '</div><div class="mic">A fost sigur pentru celiac? (dacă te interesează)</div>' +
+      '<div class="verd" role="group" aria-label="Siguranță pentru celiac">' +
+      Object.keys(NUME_VERDICT).map(k => '<button type="button" data-act="rev-v" data-v="' + k + '" aria-pressed="' + (rv.v === k) + '">' + NUME_VERDICT[k] + "</button>").join("") +
+      '</div><label class="mic" for="rn-' + id + '">Notă pentru data viitoare:</label>' +
+      '<textarea id="rn-' + id + '" maxlength="500" placeholder="ex: au schimbat mănușile, prăjitura de nuci"></textarea>' +
+      '<div class="rand"><button type="button" data-act="rev-gata">Salvează</button>' +
+      '<button type="button" class="secundar" data-act="rev-sterge">Șterge nota</button></div></div>';
+    extra.querySelector("textarea").value = notite[l.id] || "";
+  }
+  else if (act === "rev-n") {
+    const n = parseInt(b.dataset.n, 10);
+    extra.dataset.r = n;
+    extra.querySelectorAll(".st").forEach(x => x.setAttribute("aria-pressed", String(parseInt(x.dataset.n, 10) <= n)));
+  }
+  else if (act === "rev-v") {
+    extra.dataset.v = extra.dataset.v === b.dataset.v ? "" : b.dataset.v;
+    extra.querySelectorAll("[data-act=rev-v]").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.v === extra.dataset.v)));
+  }
+  else if (act === "rev-gata" || act === "rev-sterge") {
+    if (act === "rev-sterge") { delete recenzii[l.id]; }
+    else {
+      const r = parseInt(extra.dataset.r, 10) || 0;
+      const text = extra.querySelector("textarea").value.trim();
+      if (!r) { extra.querySelector(".rev-box .mic").textContent = "Alege mai întâi o notă (apasă pe stele)."; return; }
+      recenzii[l.id] = { r, v: extra.dataset.v || "", t: Date.now(), nume: l.nume || l.categorie, categorie: l.categorie };
+      if (text) notite[l.id] = text; else delete notite[l.id];
+      scrieStocat("notite", notite);
+      if (!esteFavorit(l.id)) salveazaFavorit(l);
+    }
+    scrieStocat("recenzii", recenzii);
+    reafiseazaTot();
   }
   else if (act === "nota-gata" || act === "nota-sterge") {
     const text = act === "nota-sterge" ? "" : extra.querySelector("textarea").value.trim();
@@ -1733,6 +1910,161 @@ el.fText.addEventListener("input", () => { marcheazaChips(); refiltreaza(); });
 [el.fCand, el.fOra].forEach(x => x.addEventListener("change", () => { actualizeazaCand(); refiltreaza(); }));
 el.btnMai.addEventListener("click", () => { cateAfisate += PE_PAGINA; afiseaza(); });
 
+
+/* =====================================================================
+   PARTEA 13 – ASPECT ȘI FUNCȚII NOI
+   Tema zi/noapte, banda care se mișcă, intrarea cardurilor, bara de jos,
+   jurnalul de mese și cererea în limba țării (Italia, Turcia).
+   ===================================================================== */
+const miscareRedusa = () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+// --- Tema: Auto → Zi → Noapte ---
+const NUME_TEMA = { auto: "Auto", zi: "Zi", noapte: "Noapte" };
+function modTema() { const m = citesteStocat("tema"); return NUME_TEMA[m] ? m : "auto"; }
+function actualizeazaButonTema() {
+  const m = modTema();
+  $("btnTema").textContent = (m === "auto" ? "Auto · " : "") + (window.temaEfectiva() === "noapte" ? "Noapte" : "Zi") + (m === "auto" ? "" : " ✓");
+}
+$("btnTema").addEventListener("click", () => {
+  const ordine = ["auto", "zi", "noapte"];
+  scrieStocat("tema", ordine[(ordine.indexOf(modTema()) + 1) % 3]);
+  window.aplicaTema(); actualizeazaButonTema();
+});
+if (window.matchMedia) {
+  const mq = window.matchMedia("(prefers-color-scheme: dark)");
+  (mq.addEventListener ? mq.addEventListener.bind(mq, "change") : mq.addListener.bind(mq))(() => { window.aplicaTema(); actualizeazaButonTema(); });
+}
+setInterval(() => { window.aplicaTema(); actualizeazaButonTema(); }, 10 * 60 * 1000);   // trece singură pe noapte seara
+actualizeazaButonTema();
+
+// --- Banda de sus: arată câte locuri sunt și se mișcă ușor când derulezi ---
+function actualizeazaBanda(potrivite, acum) {
+  let t = "aproape de tine";
+  if (potrivite && potrivite.length) {
+    const deschise = potrivite.filter(l => esteDeschis(l.zileProgram, acum) === true).length;
+    t = potrivite.length + " locuri · în " + (centru ? textRaza(razaCurentaSigur()) : "jurul tău") + (deschise ? " · " + deschise + " deschise acum" : "");
+  }
+  $("bandaText").innerHTML = new Array(6).fill("<span>" + esc(t) + "</span>").join("");
+  masoara();
+}
+function razaCurentaSigur() { try { return razaCurenta(); } catch (e) { return 1000; } }
+
+const antet = $("antet"), banda = $("banda"), bandaText = $("bandaText"), titlu = antet.querySelector("h1");
+let latimeSpan = 0, asteapta = false;
+const areObservator = "ResizeObserver" in window;
+if (areObservator) { const ro = new ResizeObserver(() => masoara()); ro.observe(antet); ro.observe(banda); }
+function masoara() {
+  const s = bandaText.firstElementChild;
+  latimeSpan = s ? s.getBoundingClientRect().width : 0;
+  document.documentElement.style.setProperty("--antet", antet.offsetHeight + "px");
+  document.documentElement.style.setProperty("--sus", (antet.offsetHeight + banda.offsetHeight) + "px");
+}
+function peDerulare() {
+  asteapta = false;
+  const y = window.scrollY || 0;
+  const mare = window.innerWidth > 600;
+  const p = Math.max(0, Math.min(1, y / 160));
+  titlu.style.setProperty("--t", Math.round((mare ? 52 : 44) - (mare ? 22 : 18) * p) + "px");
+  antet.classList.toggle("mica", p > 0.6);
+  if (!miscareRedusa() && latimeSpan > 0) bandaText.style.transform = "translateX(" + (-((y * 0.5) % latimeSpan)) + "px)";
+  if (!areObservator) {                       // telefoane foarte vechi: măsurăm ca înainte
+    const nou = antet.offsetHeight + "px";
+    if (document.documentElement.style.getPropertyValue("--antet") !== nou) masoara();
+  }
+}
+window.addEventListener("scroll", () => { if (!asteapta) { asteapta = true; requestAnimationFrame(peDerulare); } }, { passive: true });
+window.addEventListener("resize", () => { masoara(); peDerulare(); });
+masoara(); peDerulare();
+
+// --- Cardurile apar ușor când ajung pe ecran ---
+let observator = null;
+function observaCarduri() {
+  if (miscareRedusa() || !("IntersectionObserver" in window)) { document.documentElement.classList.remove("anim"); return; }
+  document.documentElement.classList.add("anim");
+  if (!observator) observator = new IntersectionObserver(intrari => {
+    for (const i of intrari) if (i.isIntersecting) { i.target.classList.add("vazut"); observator.unobserve(i.target); }
+  }, { rootMargin: "0px 0px -8% 0px" });
+  for (const c of el.lista.children) if (!c.classList.contains("vazut")) observator.observe(c);
+}
+
+// --- Bara de jos (merge cu o singură mână) ---
+$("bFoame").addEventListener("click", () => el.btnFoame.click());
+$("bGps").addEventListener("click", () => el.btnGps.click());
+$("bFav").addEventListener("click", () => { el.btnFavorite.click(); sincronizeazaBara(); });
+$("bJurnal").addEventListener("click", () => {
+  const arata = el.panouJurnal.hidden;
+  el.panouJurnal.hidden = !arata;
+  if (arata) { arataJurnal(); deruleaza(el.panouJurnal, { block: "start" }); }
+  sincronizeazaBara();
+});
+function sincronizeazaBara() {
+  $("bFav").setAttribute("aria-expanded", String(!el.panouFavorite.hidden));
+  $("bJurnal").setAttribute("aria-expanded", String(!el.panouJurnal.hidden));
+}
+
+// --- Jurnalul de mese ---
+function arataJurnal() {
+  const lista = Object.entries(recenzii).map(([id, r]) => Object.assign({ id }, r)).sort((a, b) => b.t - a.t);
+  el.panouJurnal.innerHTML = '<h2 style="font-size:1.1rem;margin:4px 0 8px">📒 Jurnalul meu de mese (' + lista.length + ")</h2>" +
+    (lista.length
+      ? '<ol class="jurnal">' + lista.map(r => '<li><div class="loc"><div class="cap"><div class="num"><b>' + esc(String(r.r)) + "</b><small>din 5</small></div><h3>" + esc(r.nume || "") + "</h3></div>" +
+          '<div class="mic">' + esc(r.categorie || "") + " · " + new Date(r.t).toLocaleDateString("ro-RO", { day: "numeric", month: "long" }) + "</div>" +
+          (r.v ? '<div class="revsum v-' + esc(r.v) + '">' + esc(NUME_VERDICT[r.v] || "") + "</div>" : "") +
+          (notite[r.id] ? '<div class="nota">📝 ' + esc(notite[r.id]) + "</div>" : "") + "</div></li>").join("") + "</ol>"
+      : '<div class="loc">Încă nimic aici. Apasă „⭐ Dă o notă” pe un loc unde ai mâncat și apare în jurnal.</div>');
+}
+
+// --- Panoul de căutare: după rezultate rămâne doar o linie „zonă · rază · Schimbă” ---
+function streangeCautarea() {
+  const p = $("panouCautare");
+  const zona = centru && centru.eticheta ? centru.eticheta : "zona ta";
+  $("textLinie").textContent = zona + " · " + textRaza(razaCurentaSigur());
+  const eraStrans = p.classList.contains("strans");
+  p.classList.add("strans");
+  $("btnSchimba").setAttribute("aria-expanded", "false");
+  // prima dată după o căutare: coborâm la rezultate, ca să vezi locurile fără să derulezi tu
+  if (!eraStrans && pornit) setTimeout(() => deruleaza(el.lista, { block: "start", behavior: miscareRedusa() ? "auto" : "smooth" }), 60);
+}
+let pornit = false;
+function deschideCautarea() {
+  $("panouCautare").classList.remove("strans");
+  $("btnSchimba").setAttribute("aria-expanded", "true");
+}
+$("btnSchimba").addEventListener("click", () => {
+  deschideCautarea();
+  el.zona.focus();
+});
+
+// --- Cererea în limba țării: Italia și Turcia (după nume, apoi după coordonate) ---
+function taraLocului() {
+  if (!centru) return null;
+  const t = centru.eticheta || "";
+  if (/türkiye|turkey|turcia/i.test(t)) return "tr";
+  if (/italia|italy|italie/i.test(t)) return "it";
+  const { lat, lon } = centru;
+  if (lat >= 36.0 && lat <= 42.2 && lon >= 26.0 && lon <= 45.0) return "tr";
+  const corsica = lat > 41.3 && lat < 43.1 && lon > 8.4 && lon < 9.7;
+  if (lat >= 36.6 && lat <= 47.1 && lon >= 6.6 && lon <= 18.6 && !corsica) return "it";
+  return null;
+}
+const NUME_TARA = { tr: "în Turcia", it: "în Italia" };
+const ascunseTara = {};
+function actualizeazaTara() {
+  const t = taraLocului();
+  if (!t || ascunseTara[t]) { el.bannerTara.hidden = true; return; }
+  el.titluTara.textContent = "Ești " + NUME_TARA[t] + ": cererea pentru personal, în " + (t === "it" ? "italiană" : "turcă");
+  el.textTara.textContent = TEXTE_CERERE[t];
+  el.textTara.setAttribute("lang", t);
+  el.bannerTara.dataset.tara = t;
+  el.bannerTara.hidden = false;
+}
+$("btnAscundeTara").addEventListener("click", () => { ascunseTara[el.bannerTara.dataset.tara] = true; el.bannerTara.hidden = true; });
+$("btnCopiazaTara").addEventListener("click", async () => {
+  const ok = await copiaza(TEXTE_CERERE[el.bannerTara.dataset.tara]);
+  setStare(ok ? "✔ Am copiat textul. Lipește-l într-un mesaj sau arată-l personalului." : "Nu am putut copia automat. Ține apăsat pe text și alege Copiază.", ok ? "ok" : "atentie");
+});
+actualizeazaTara();
+
 // La pornire: refacem ultima căutare din memorie (instant, fără internet), dacă e destul de nouă
 construiesteZileCand();
 stareRetea();
@@ -1750,6 +2082,7 @@ stareRetea();
                                                                    : "la " + oraSalvarii(gasit.t)) +
                  ". Apasă 🔄 pentru date noi.", "");
 })();
+pornit = true;
 </script>
 </body>
 </html>
