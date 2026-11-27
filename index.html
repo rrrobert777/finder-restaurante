@@ -237,6 +237,8 @@
   #bara button[aria-expanded="true"] { background: var(--verde-deschis); }
   @media (max-width: 600px) { .panou > .rand:first-child { display: none; } }
 
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
   /* Panoul de căutare se strânge într-o linie după ce ai rezultate */
   .linie { display: none; align-items: center; gap: 10px; }
   #textLinie { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -421,6 +423,7 @@
   </div>
   <div id="roata" aria-hidden="true"></div>
   <ol id="alegere" aria-live="polite"></ol>
+  <h2 class="sr">Locurile găsite</h2>
   <ol id="lista" tabindex="-1" aria-label="Locuri găsite"></ol>
   <div class="rand"><button id="btnMai" class="secundar" type="button" hidden>Arată mai multe</button></div>
 </main>
@@ -923,7 +926,7 @@ function fetchCuTimeout(url, optiuni, ms) {
 }
 
 // Serverul mare e des aglomerat. Strategia:
-// 1) întrebăm primul server; 2) dacă după 10 s tot nu a răspuns, întrebăm și al doilea, și îl luăm pe cel
+// 1) întrebăm primul server; 2) dacă după 6 s tot nu a răspuns, întrebăm și al doilea, și îl luăm pe cel
 // care răspunde primul; 3) dacă unul dă eroare, trecem imediat la următorul; 4) renunțăm după 60 s.
 function cereOverpass(interogare) {
   return new Promise((resolve, reject) => {
@@ -939,7 +942,7 @@ function cereOverpass(interogare) {
       const url = SERVERE_OVERPASS[urmator++];
       inZbor++;
       clearTimeout(ceasRezerva);
-      ceasRezerva = setTimeout(() => { if (inZbor < 2) porneste(); }, 10000);
+      ceasRezerva = setTimeout(() => { if (inZbor < 2) porneste(); }, 6000);
       fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -1061,6 +1064,7 @@ const PE_PAGINA = 50;
 let centru = null;           // punctul față de care calculăm distanțele
 let toateLocurile = [];      // tot ce avem pentru zona curentă
 let complet = false;         // false = doar lista rapidă (fără program/telefon)
+let programIntarziat = false; // true = serverul mare întârzie: nu mai arătăm clepsidra la nesfârșit
 let cateAfisate = PE_PAGINA;
 let ocupat = false;
 let numarCautare = 0;
@@ -1163,11 +1167,15 @@ async function cautaLocuri(forteaza) {
   };
   actualizeaza();
   const cronometru = cronometruActiv = setInterval(actualizeaza, 1000);
+  programIntarziat = false;
+  const ceasProgram = setTimeout(() => {      // după 20 s fără răspuns, cardurile spun clar ce se întâmplă
+    if (aceasta === numarCautare && !complet) { programIntarziat = true; afiseaza(); }
+  }, 20000);
   let r;
   try {
     r = await cereOverpass(construiesteInterogare(punct.lat, punct.lon, raza));
   } catch (e) {
-    clearInterval(cronometru);
+    clearInterval(cronometru); clearTimeout(ceasProgram);
     if (aceasta !== numarCautare) return;
     // Rezervă: lista rapidă rămâne pe ecran
     if (arataRapid && toateLocurile.length) {
@@ -1186,7 +1194,7 @@ async function cautaLocuri(forteaza) {
     numarCautare++;                      // lista rapidă care ar mai sosi acum nu mai contează
     throw e;
   }
-  clearInterval(cronometru);
+  clearInterval(cronometru); clearTimeout(ceasProgram); programIntarziat = false;
   if (aceasta !== numarCautare) return;  // între timp ai cerut altă zonă
   const date = { lat: punct.lat, lon: punct.lon, raza, elements: r.elements || [], remark: r.remark || "" };
   memorieLocuri.set(punct.lat.toFixed(4) + "," + punct.lon.toFixed(4) + "," + raza, date);
@@ -1245,7 +1253,9 @@ function filtreaza() {
    ===================================================================== */
 // Textul despre program: „Deschis · închide la 22:00”, „Închis · se deschide mâine la 09:00”
 function textProgram(l, acum) {
-  if (l.previzualizare) return '⏳ <span class="mic">Programul se încarcă…</span>';
+  if (l.previzualizare) return programIntarziat
+    ? 'ℹ️ <span class="mic">Programul nu a venit încă (serverul gratuit e aglomerat). Apasă 🔄 ca să încerc din nou.</span>'
+    : '⏳ <span class="mic">Programul se încarcă…</span>';
   const sch = urmatoareaSchimbare(l.zileProgram, acum);
   const brut = l.program ? ' <span class="mic">(' + esc(l.program) + ")</span>" : "";
   const sarb = esteSarbatoareRO(acum) && l.zileProgram && l.zileProgram[7] !== undefined ? " 🎉 program de sărbătoare" : "";
@@ -2099,6 +2109,11 @@ stareRetea();
                  ". Apasă 🔄 pentru date noi.", "");
 })();
 pornit = true;
+
+// --- Fără internet: un „service worker” ține aplicația în memoria telefonului ---
+if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+  window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(() => {}); });
+}
 </script>
 </body>
 </html>
