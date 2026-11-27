@@ -65,9 +65,8 @@
   header p { margin: 6px 0 0; font-size: .9rem; color: var(--slab); }
   header.mica p { display: none; }
   #btnTema { flex: none; background: transparent; color: var(--text); border: 2px solid var(--text); border-radius: 22px; padding: 4px 14px; min-height: 44px; font-size: 14px; }
-  #banda { position: sticky; top: var(--antet, 70px); z-index: 19; overflow: hidden; white-space: nowrap; background: var(--verde-deschis); color: var(--text); padding: 10px 0; font-weight: 600; font-size: .95rem; }
-  #banda .in2 { display: inline-block; will-change: transform; }
-  #banda .in2 span { display: inline-block; padding-right: 2.2em; }
+  #banda { position: sticky; top: var(--antet, 70px); z-index: 19; background: var(--verde-deschis); color: var(--text); padding: 9px 14px; font-weight: 600; font-size: .95rem; text-align: center; }
+  #banda .in2 { max-width: 760px; margin: 0 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   main { max-width: 760px; margin: 0 auto; padding: 12px; }
   .panou, .filtre, .loc { background: var(--card); border: 1px solid var(--chenar); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
   .loc { border-radius: 8px; border-left: 5px solid var(--chenar); }
@@ -239,7 +238,6 @@
   .anim #lista > .loc { transition: opacity .5s ease, transform .5s ease; }
   .anim #lista > .loc:not(.vazut) { opacity: 0; transform: translateY(26px) scale(.98); }
   @media (prefers-reduced-motion: reduce) {
-    #banda .in2 { transform: none !important; }
     .anim #lista > .loc:not(.vazut) { opacity: 1; transform: none; }
     * { scroll-behavior: auto !important; }
   }
@@ -257,7 +255,7 @@
     <button id="btnTema" type="button" aria-label="Schimbă tema: automat, zi sau noapte">Auto</button>
   </div>
 </header>
-<div id="banda" aria-hidden="true"><div class="in2" id="bandaText"><span>aproape de tine</span><span>aproape de tine</span><span>aproape de tine</span><span>aproape de tine</span></div></div>
+<div id="banda" role="status"><div class="in2" id="bandaText">aproape de tine</div></div>
 
 <main>
   <section class="panou" id="panouCautare" aria-label="Căutare">
@@ -1937,25 +1935,23 @@ if (window.matchMedia) {
 setInterval(() => { window.aplicaTema(); actualizeazaButonTema(); }, 10 * 60 * 1000);   // trece singură pe noapte seara
 actualizeazaButonTema();
 
-// --- Banda de sus: arată câte locuri sunt și se mișcă ușor când derulezi ---
+// --- Banda de sus: fixă, arată câte locuri sunt ---
 function actualizeazaBanda(potrivite, acum) {
   let t = "aproape de tine";
   if (potrivite && potrivite.length) {
     const deschise = potrivite.filter(l => esteDeschis(l.zileProgram, acum) === true).length;
     t = potrivite.length + " locuri · în " + (centru ? textRaza(razaCurentaSigur()) : "jurul tău") + (deschise ? " · " + deschise + " deschise acum" : "");
   }
-  $("bandaText").innerHTML = new Array(6).fill("<span>" + esc(t) + "</span>").join("");
+  $("bandaText").textContent = t;
   masoara();
 }
 function razaCurentaSigur() { try { return razaCurenta(); } catch (e) { return 1000; } }
 
 const antet = $("antet"), banda = $("banda"), bandaText = $("bandaText"), titlu = antet.querySelector("h1");
-let latimeSpan = 0, asteapta = false;
+let asteapta = false;
 const areObservator = "ResizeObserver" in window;
 if (areObservator) { const ro = new ResizeObserver(() => masoara()); ro.observe(antet); ro.observe(banda); }
 function masoara() {
-  const s = bandaText.firstElementChild;
-  latimeSpan = s ? s.getBoundingClientRect().width : 0;
   document.documentElement.style.setProperty("--antet", antet.offsetHeight + "px");
   document.documentElement.style.setProperty("--sus", (antet.offsetHeight + banda.offsetHeight) + "px");
 }
@@ -1966,7 +1962,6 @@ function peDerulare() {
   const p = Math.max(0, Math.min(1, y / 160));
   titlu.style.setProperty("--t", Math.round((mare ? 52 : 44) - (mare ? 22 : 18) * p) + "px");
   antet.classList.toggle("mica", p > 0.6);
-  if (!miscareRedusa() && latimeSpan > 0) bandaText.style.transform = "translateX(" + (-((y * 0.5) % latimeSpan)) + "px)";
   if (!areObservator) {                       // telefoane foarte vechi: măsurăm ca înainte
     const nou = antet.offsetHeight + "px";
     if (document.documentElement.style.getPropertyValue("--antet") !== nou) masoara();
