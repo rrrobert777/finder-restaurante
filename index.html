@@ -118,7 +118,7 @@
   #stare.ok { display: block; background: var(--succes); }
   #stare.eroare { display: block; background: var(--eroare); color: var(--rau); }
   #stare.atentie { display: block; background: var(--atentie); }
-  #randActiuni button { font-size: 14px; min-height: 38px; padding: 6px 12px; }
+  #randActiuni button { font-size: 14px; min-height: 44px; padding: 6px 12px; }
   #sugestii button { display: block; width: 100%; text-align: left; margin: 6px 0;
                      background: var(--verde-deschis); color: var(--text); }
 
@@ -126,8 +126,8 @@
   .filtre { position: sticky; top: var(--sus); z-index: 5; }
   .filtre:has(details[open]) { position: static; }
   .cerere { font-size: 1.1rem; line-height: 1.5; margin: 10px 0; padding: 12px 14px; border-left: 4px solid var(--verde); background: var(--gri); border-radius: 8px; }
-  #ghidCerere summary { cursor: pointer; padding: 8px 0; color: var(--link); font-weight: 600; min-height: 32px; }
-  .filtre details summary { cursor: pointer; padding: 8px 0 2px; color: var(--link); font-weight: 600; min-height: 32px; }
+  #ghidCerere summary { cursor: pointer; padding: 8px 0; color: var(--link); font-weight: 600; min-height: 44px; display: flex; align-items: center; }
+  .filtre details summary { cursor: pointer; padding: 8px 0 2px; color: var(--link); font-weight: 600; min-height: 44px; display: flex; align-items: center; }
   .bife-filtre { display: flex; flex-wrap: nowrap; gap: 8px; overflow-x: auto; padding: 2px 0 4px; }
   .bife-filtre label { display: flex; align-items: center; gap: 8px; min-height: 44px; flex: none; white-space: nowrap; padding: 0 12px; border: 1px solid var(--camp); border-radius: 99px; }
   .grila { display: grid; grid-template-columns: auto 1fr; gap: 8px 10px; align-items: center; margin: 8px 0; }
@@ -157,10 +157,10 @@
   .bife span.gf { background: var(--verde-deschis); color: var(--ok); font-weight: 600; }
   .nota { margin-top: 6px; padding: 6px 8px; border-left: 3px solid #e0a800; background: var(--atentie); border-radius: 4px; white-space: pre-wrap; }
   .linkuri, .actiuni { margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; }
-  .buton-link { display: inline-flex; align-items: center; min-height: 40px; padding: 6px 14px; border-radius: 10px;
+  .buton-link { display: inline-flex; align-items: center; min-height: 44px; padding: 6px 14px; border-radius: 10px;
                 background: var(--gri); text-decoration: none; color: var(--link); font-weight: 600; }
   .buton-link.sun { background: var(--verde-deschis); color: var(--ok); font-weight: 600; }
-  .actiuni button, .actiuni a { font-size: 14px; min-height: 36px; padding: 4px 10px; background: transparent;
+  .actiuni button, .actiuni a { font-size: 14px; min-height: 44px; display: inline-flex; align-items: center; padding: 4px 10px; background: transparent;
                 color: var(--slab); border: 1px solid var(--chenar); border-radius: 8px; text-decoration: none;
                 display: inline-flex; align-items: center; }
   .extra { margin-top: 8px; }
@@ -1953,6 +1953,7 @@ function modTema() { const m = citesteStocat("tema"); return NUME_TEMA[m] ? m : 
 function actualizeazaButonTema() {
   const m = modTema();
   $("btnTema").textContent = (m === "auto" ? "Auto · " : "") + (window.temaEfectiva() === "noapte" ? "Noapte" : "Zi") + (m === "auto" ? "" : " ✓");
+  $("btnTema").setAttribute("aria-label", $("btnTema").textContent.replace(" ✓", "") + ". Apasă ca să schimbi tema: automat, zi sau noapte");
 }
 $("btnTema").addEventListener("click", () => {
   const ordine = ["auto", "zi", "noapte"];
