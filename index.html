@@ -83,6 +83,11 @@
   header .in { max-width: 760px; margin: 0 auto; padding: 0 14px; display: flex; align-items: center; min-height: 44px; justify-content: space-between; gap: 10px; }
   header h1 { margin: 0; font: 800 1.9rem/1 var(--serif); letter-spacing: -.04em; }
   header h1 span { color: var(--bol); }
+  #progres { position: fixed; left: 0; top: 0; height: 3px; width: 100%; transform: scaleX(0); transform-origin: left; background: var(--rosu-foame); z-index: 40; pointer-events: none; }
+  #indicator { position: fixed; right: 12px; bottom: calc(86px + env(safe-area-inset-bottom)); z-index: 29; min-height: 44px; min-width: 64px; padding: 6px 14px;
+               border-radius: 22px; border: 1px solid var(--chenar); background: var(--card); color: var(--text); font-weight: 700; font-size: .95rem;
+               box-shadow: 0 2px 10px rgba(0,0,0,.18); font-variant-numeric: tabular-nums; }
+  #indicator[hidden] { display: none; }
   .lema { margin: 4px 2px 10px; font-size: .95rem; color: var(--slab); }
   #btnTema { flex: none; background: transparent; color: var(--text); border: 2px solid var(--text); border-radius: 22px; padding: 4px 14px; min-height: 44px; font-size: 14px; }
   #banda { position: sticky; top: var(--antet, 70px); z-index: 19; background: var(--verde-deschis); color: var(--text); padding: 9px 14px; font-weight: 600; font-size: .95rem; text-align: center; }
@@ -170,7 +175,8 @@
   #foame .loc, #alegere .loc { border: 2px solid var(--portocaliu); }
   .mare { display: block; text-align: center; font-size: 1.1rem; font-weight: 700; padding: 14px; border-radius: 10px;
           background: var(--verde); color: #fff !important; text-decoration: none; margin-top: 10px; }
-  #btnSurpriza { background: var(--portocaliu); }
+  #btnSurpriza { background: var(--portocaliu); color: #1b1a17; }
+  html[data-tema="zi"] #btnSurpriza { color: #fff; }
   #roata { text-align: center; margin-bottom: 12px; }
   #roata .ac { font-size: 2rem; line-height: 1; color: var(--rosu-foame); }
   #roata svg { width: min(320px, 90vw); height: auto; transition: transform 3.2s cubic-bezier(.17,.67,.21,1); }
@@ -274,7 +280,10 @@
     <button id="btnTema" type="button" aria-label="Schimbă tema: automat, zi sau noapte">Auto</button>
   </div>
 </header>
+<div id="progres" aria-hidden="true"></div>
 <div id="banda" role="status" hidden><div class="in2" id="bandaText">aproape de tine</div></div>
+
+<button id="indicator" type="button" hidden></button>
 
 <main>
   <p class="lema">Unde mănânc în apropiere: restaurante, cafenele și patiserii.</p>
@@ -1967,10 +1976,12 @@ setInterval(() => { window.aplicaTema(); actualizeazaButonTema(); }, 10 * 60 * 1
 actualizeazaButonTema();
 
 // --- Banda de sus: fixă, arată câte locuri sunt ---
+let nrDeschise = 0, nrPotrivite = 0;
 function actualizeazaBanda(potrivite, acum) {
   let t = "aproape de tine";
   if (potrivite && potrivite.length) {
     const deschise = potrivite.filter(l => esteDeschis(l.zileProgram, acum) === true).length;
+    nrDeschise = deschise; nrPotrivite = potrivite.length;
     t = potrivite.length + " locuri · în " + (centru ? textRaza(razaCurentaSigur()) : "jurul tău") + (deschise ? " · " + deschise + " deschise acum" : "");
   }
   $("bandaText").textContent = t;
@@ -1988,6 +1999,42 @@ function masoara() {
 }
 window.addEventListener("resize", masoara);
 masoara();
+
+// --- Indicator de derulare: linie subțire sus + un buton cu procent (apeși ca să alegi ce arată) ---
+const MODURI_IND = ["p", "loc", "des"];
+let modInd = "p";
+try { const m = localStorage.getItem("mancare_v1_indicator"); if (MODURI_IND.indexOf(m) >= 0) modInd = m; } catch (e) {}
+const ind = $("indicator"), progres = $("progres");
+let indAsteapta = false;
+function actualizeazaIndicator() {
+  indAsteapta = false;
+  const carduri = el.lista.children;
+  const n = carduri.length;
+  const y = window.scrollY || 0;
+  const aratat = n > 1 && y > 40;
+  ind.hidden = !aratat; progres.style.transform = "scaleX(0)";
+  if (!aratat) return;
+  const sus = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--sus")) || 0;
+  const r = el.lista.getBoundingClientRect();
+  const lungime = Math.max(1, r.height - (window.innerHeight - sus));
+  const p = Math.max(0, Math.min(1, (sus - r.top) / lungime));
+  progres.style.transform = "scaleX(" + p.toFixed(3) + ")";
+  let loc = 1;
+  for (let i = 0; i < n; i++) { if (carduri[i].getBoundingClientRect().bottom > sus + 20) { loc = i + 1; break; } loc = i + 1; }
+  let t, nume;
+  if (modInd === "loc") { t = "loc " + loc + " / " + (nrPotrivite || n); nume = "locul " + loc + " din " + (nrPotrivite || n); }
+  else if (modInd === "des") { t = nrDeschise + " deschise"; nume = nrDeschise + " locuri deschise acum"; }
+  else { t = Math.round(p * 100) + "%"; nume = Math.round(p * 100) + " la sută din listă"; }
+  if (ind.textContent !== t) ind.textContent = t;
+  ind.setAttribute("aria-label", nume + ". Apasă ca să alegi ce arată indicatorul.");
+}
+ind.addEventListener("click", () => {
+  modInd = MODURI_IND[(MODURI_IND.indexOf(modInd) + 1) % MODURI_IND.length];
+  try { localStorage.setItem("mancare_v1_indicator", modInd); } catch (e) {}
+  actualizeazaIndicator();
+});
+window.addEventListener("scroll", () => { if (!indAsteapta) { indAsteapta = true; requestAnimationFrame(actualizeazaIndicator); } }, { passive: true });
+window.addEventListener("resize", actualizeazaIndicator);
 
 // --- Cardurile apar ușor când ajung pe ecran ---
 let observator = null;
