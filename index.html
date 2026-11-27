@@ -191,7 +191,7 @@
   }
 
   /* ===== Aspect „Afiș cald”: carduri cu distanța mare, culori liniștite ===== */
-  body { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+  body { padding-bottom: calc(112px + env(safe-area-inset-bottom)); }
   .panou, .filtre, .loc { border-radius: 22px; border-color: var(--chenar); }
   .loc { border-left-width: 1px; padding: 16px; }
   .loc:has(.deschis) { border-left-color: var(--chenar); }
@@ -278,7 +278,7 @@
     <button id="btnTema" type="button" aria-label="Schimbă tema: automat, zi sau noapte">Auto</button>
   </div>
 </header>
-<div id="banda" role="status"><div class="in2" id="bandaText">aproape de tine</div></div>
+<div id="banda" role="status" hidden><div class="in2" id="bandaText">aproape de tine</div></div>
 
 <main>
   <section class="panou" id="panouCautare" aria-label="Căutare">
@@ -1029,7 +1029,9 @@ function cereLocatiaGps() {
       p => resolve({ lat: p.coords.latitude, lon: p.coords.longitude, eticheta: "locația ta" }),
       err => {
         const mesaje = {
-          1: "Locația a fost refuzată (sau browserul o blochează pentru fișiere deschise direct). Scrie o zonă în caseta de mai sus.",
+          1: /^https?:$/.test(location.protocol)
+               ? "Locația nu e permisă pentru acest site. Pe iPhone: Setări → Confidențialitate și securitate → Servicii de localizare → Safari → alege „Cât timp folosești aplicația”. Sau scrie o zonă în caseta de mai sus."
+               : "Locația a fost refuzată (sau browserul o blochează pentru fișiere deschise direct). Scrie o zonă în caseta de mai sus.",
           2: "Nu am putut afla locația ta acum. Scrie o zonă în caseta de mai sus.",
           3: "Aflarea locației a durat prea mult. Încearcă din nou sau scrie o zonă în caseta de mai sus."
         };
@@ -1975,6 +1977,7 @@ function actualizeazaBanda(potrivite, acum) {
     t = potrivite.length + " locuri · în " + (centru ? textRaza(razaCurentaSigur()) : "jurul tău") + (deschise ? " · " + deschise + " deschise acum" : "");
   }
   $("bandaText").textContent = t;
+  $("banda").hidden = !(potrivite && potrivite.length);   // fără rezultate, banda nu ocupă loc
   masoara();
 }
 function razaCurentaSigur() { try { return razaCurenta(); } catch (e) { return 1000; } }
