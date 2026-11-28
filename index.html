@@ -91,6 +91,14 @@
   #sfatInstal { margin: 0 0 12px; padding: 12px 14px; border-radius: 16px; background: var(--card); border: 1px solid var(--chenar); font-size: .95rem; line-height: 1.4; }
   #sfatInstal[hidden] { display: none; }
   #sfatInstal button { margin-top: 8px; min-height: 44px; padding: 8px 18px; border-radius: 22px; border: 2px solid var(--text); background: transparent; color: var(--text); font-weight: 700; font-size: 14px; }
+  #zoneSalvate .zn, #zoneSalvate .zx { min-height: 44px; border-radius: 22px; border: 1px solid var(--chenar); background: var(--card); color: var(--text); font-size: 14px; font-weight: 600; }
+  #zoneSalvate .zn { padding: 6px 14px; }
+  #zoneSalvate .zx { min-width: 44px; padding: 0; color: var(--slab); }
+  #zoneSalvate[hidden] { display: none; }
+  #panouCautare.strans > #zoneSalvate { display: none; }
+  .profilCerere { font-size: .9rem; } .profilCerere select { min-height: 44px; font-size: 16px; }
+  .profilCerere [hidden] { display: none; }
+  .curand { color: var(--portocaliu); font-weight: 700; }
   .lema { margin: 4px 2px 10px; font-size: .95rem; color: var(--slab); }
   #btnTema { flex: none; background: transparent; color: var(--text); border: 2px solid var(--text); border-radius: 22px; padding: 4px 14px; min-height: 44px; font-size: 14px; }
   #banda { position: sticky; top: var(--antet, 70px); z-index: 19; background: var(--verde-deschis); color: var(--text); padding: 9px 14px; font-weight: 600; font-size: .95rem; text-align: center; }
@@ -137,8 +145,10 @@
   .filtre details summary { cursor: pointer; padding: 8px 0 2px; color: var(--link); font-weight: 600; min-height: 44px; display: flex; align-items: center; }
   .bife-filtre { display: flex; flex-wrap: nowrap; gap: 8px; overflow-x: auto; padding: 2px 0 4px; }
   .bife-filtre label { display: flex; align-items: center; gap: 8px; min-height: 44px; flex: none; white-space: nowrap; padding: 0 12px; border: 1px solid var(--camp); border-radius: 99px; }
-  .grila { display: grid; grid-template-columns: auto 1fr; gap: 8px 10px; align-items: center; margin: 8px 0; }
-  .grila select, .grila input[type=time] { width: 100%; }
+  .grila { display: grid; grid-template-columns: 1fr; gap: 4px; margin: 8px 0; }
+  .grila label { font-weight: 600; margin-top: 8px; }
+  .grila select, .grila input[type=time] { width: 100%; min-height: 44px; }
+  .grila input[hidden] { display: none; }
   .chips { display: flex; gap: 6px; overflow-x: auto; padding: 8px 0 4px; -webkit-overflow-scrolling: touch; }
   .chips button { flex: 0 0 auto; background: var(--gri); color: var(--text); font-weight: 500; border-radius: 99px; padding: 8px 14px; }
   .chips button[aria-pressed="true"] { background: var(--verde); color: #fff; }
@@ -180,6 +190,9 @@
           background: var(--verde); color: #fff !important; text-decoration: none; margin-top: 10px; }
   #btnSurpriza { background: var(--portocaliu); color: #1b1a17; }
   html[data-tema="zi"] #btnSurpriza { color: #fff; }
+  html[data-tema="noapte"] { color-scheme: dark; }
+  html[data-tema="zi"] { color-scheme: light; }
+  input[type=checkbox] { accent-color: var(--link); width: 22px; height: 22px; }
   #roata { text-align: center; margin-bottom: 12px; }
   #roata .ac { font-size: 2rem; line-height: 1; color: var(--rosu-foame); }
   #roata svg { width: min(320px, 90vw); height: auto; transition: transform 3.2s cubic-bezier(.17,.67,.21,1); }
@@ -305,6 +318,7 @@
       <button id="btnGps" type="button">📍 Folosește locația mea</button>
     </div>
     <div class="sau">sau scrie o zonă (oraș, cartier, adresă)</div>
+    <div id="zoneSalvate" class="rand" role="group" aria-label="Zonele mele salvate" hidden></div>
     <form id="formZona" class="rand">
       <input id="zona" type="text" placeholder="Ex: Piața Victoriei, București" aria-label="Zona căutată" enterkeyhint="search" autocomplete="off">
       <button id="btnZona" type="submit">Caută</button>
@@ -344,6 +358,12 @@
         <option value="en">English</option>
         <option value="ro">Română</option>
       </select>
+      <div class="rand profilCerere">
+        <label>Cine are nevoie:
+          <select class="selCine"><option value="eu">Eu</option><option value="alt">O persoană cu mine</option></select></label>
+        <label class="spGen" hidden>Gen (în italiană):
+          <select class="selGen"><option value="m">El</option><option value="f">Ea</option></select></label>
+      </div>
       <blockquote id="textCerere" class="cerere" lang="tr"></blockquote>
       <button id="btnCopiazaCerere" class="secundar" type="button">📋 Copiază textul</button>
       <p><strong>Ce să urmărești:</strong></p>
@@ -362,6 +382,12 @@
   <section id="bannerTara" class="panou" hidden aria-label="Cerere pentru personal">
     <details id="detaliiTara">
       <summary id="titluTara"></summary>
+      <div class="rand profilCerere">
+        <label>Cine are nevoie:
+          <select class="selCine"><option value="eu">Eu</option><option value="alt">O persoană cu mine</option></select></label>
+        <label class="spGen" hidden>Gen (în italiană):
+          <select class="selGen"><option value="m">El</option><option value="f">Ea</option></select></label>
+      </div>
       <blockquote id="textTara" class="cerere"></blockquote>
       <div class="rand">
         <button id="btnCopiazaTara" type="button" class="secundar">Copiază textul</button>
@@ -372,6 +398,7 @@
   <div class="rand" id="randActiuni" hidden>
     <button id="btnRefresh" class="secundar" type="button">🔄 Reîmprospătează</button>
     <button id="btnHarta" class="secundar" type="button" aria-expanded="false">🗺️ Arată harta</button>
+    <button id="btnSalveazaZona" class="secundar" type="button">📌 Salvează zona</button>
   </div>
   <div id="sugestii" class="panou" hidden></div>
   <section id="panouFavorite" hidden aria-label="Favoritele mele"></section>
@@ -397,13 +424,20 @@
       <label><input type="checkbox" id="fGluten"> 🌾 Doar fără gluten</label>
     </div>
     <p id="notaGluten" class="mic" hidden>Pentru celiaci: „fără gluten” din OpenStreetMap nu garantează că e sigur (vase comune, făină în aer). Sună și întreabă dacă au bucătărie separată.</p>
+    <p id="notaDieta" class="mic" hidden>La dietă apar doar locurile care spun asta în harta OpenStreetMap. Multe locuri nu au datele completate, deci lista poate fi scurtă. Întreabă oricum la restaurant.</p>
     <details id="maiMulteFiltre">
       <summary>Mai multe filtre și sortare</summary>
       <div class="grila">
         <label for="fCand">Deschis la:</label>
         <select id="fCand"></select>
-        <span></span>
         <input id="fOra" type="time" value="20:00" aria-label="Ora aleasă" hidden>
+        <label for="fDieta">Dietă:</label>
+        <select id="fDieta">
+          <option value="">Oricare</option>
+          <option value="veg">Vegetariană</option>
+          <option value="vegan">Vegană</option>
+          <option value="halal">Halal</option>
+        </select>
         <label for="fSort">Sortare:</label>
         <select id="fSort">
           <option value="dist">După distanță</option>
@@ -725,6 +759,7 @@ function nivelGluten(tags) {
   return null;
 }
 
+const daSau = v => v === "yes" || v === "only";
 // Etichete scurte utile (doar dacă datele le spun explicit)
 function detalii(tags) {
   const r = [];
@@ -739,6 +774,7 @@ function detalii(tags) {
   if (tags.internet_access === "wlan" || tags.internet_access === "yes") r.push("Wi-Fi");
   if (tags["diet:vegetarian"] === "yes" || tags["diet:vegetarian"] === "only") r.push("Opțiuni vegetariene");
   if (tags["diet:vegan"] === "yes" || tags["diet:vegan"] === "only") r.push("Opțiuni vegane");
+  if (tags["diet:halal"] === "yes" || tags["diet:halal"] === "only") r.push("Halal (după OSM)");
   return r;
 }
 
@@ -757,6 +793,7 @@ function construiesteLoc(id, lat, lon, tags, centru) {
     site: tags.website || tags["contact:website"] || "",
     bucatarie: (tags.cuisine || "").replace(/;/g, ", ").replace(/_/g, " "),
     detalii: detalii(tags),
+    dieta: { veg: daSau(tags["diet:vegetarian"]) || daSau(tags["diet:vegan"]), vegan: daSau(tags["diet:vegan"]), halal: daSau(tags["diet:halal"]) },
     gluten: nivelGluten(tags)
   };
 }
@@ -812,6 +849,7 @@ function unesteDuplicate(lista) {
     if (!dublu) { pastrate.push(l); continue; }
     for (const c of CAMPURI) if (!dublu[c] && l[c]) dublu[c] = l[c];
     if (!dublu.zileProgram && l.zileProgram) dublu.zileProgram = l.zileProgram;
+    for (const k in l.dieta) if (l.dieta[k]) dublu.dieta[k] = true;
     for (const d of l.detalii) if (!dublu.detalii.includes(d)) dublu.detalii.push(d);
   }
   return pastrate;
@@ -1070,7 +1108,7 @@ const el = {
   btnRefresh: $("btnRefresh"), btnHarta: $("btnHarta"), sugestii: $("sugestii"), panouFavorite: $("panouFavorite"),
   foame: $("foame"), zonaHarta: $("zonaHarta"), harta: $("harta"), notaHarta: $("notaHarta"),
   filtre: $("filtre"), fText: $("fText"), chips: $("chips"), fDeschis: $("fDeschis"), textDeschis: $("textDeschis"),
-  fFav: $("fFav"), fGluten: $("fGluten"), notaGluten: $("notaGluten"), btnGluten: $("btnGluten"), ghidCerere: $("ghidCerere"), limbaCerere: $("limbaCerere"), textCerere: $("textCerere"), btnCopiazaCerere: $("btnCopiazaCerere"), fCand: $("fCand"), fOra: $("fOra"), fSort: $("fSort"), fTip: $("fTip"), fDist: $("fDist"),
+  fFav: $("fFav"), fGluten: $("fGluten"), notaGluten: $("notaGluten"), btnGluten: $("btnGluten"), ghidCerere: $("ghidCerere"), limbaCerere: $("limbaCerere"), textCerere: $("textCerere"), btnCopiazaCerere: $("btnCopiazaCerere"), fCand: $("fCand"), fDieta: $("fDieta"), fOra: $("fOra"), fSort: $("fSort"), fTip: $("fTip"), fDist: $("fDist"),
   grupDist: $("grupDist"), fDistAlta: $("fDistAlta"), randSurpriza: $("randSurpriza"), btnSurpriza: $("btnSurpriza"),
   roata: $("roata"), alegere: $("alegere"), lista: $("lista"), btnMai: $("btnMai"),
   panouJurnal: $("panouJurnal"), bannerTara: $("bannerTara"), titluTara: $("titluTara"), textTara: $("textTara")
@@ -1260,6 +1298,7 @@ function filtreaza() {
     (!el.fDeschis.checked || esteDeschis(l.zileProgram, moment) === true) &&
     (!el.fFav.checked || esteFavorit(l.id)) &&
     (!el.fGluten.checked || (l.gluten !== null && l.gluten !== undefined && l.gluten >= 0)) &&
+    (!el.fDieta.value || (l.dieta && l.dieta[el.fDieta.value])) &&
     potrivesteText(l, el.fText.value)), el.fSort.value, moment);
 }
 
@@ -1279,6 +1318,8 @@ function textProgram(l, acum) {
   if (sch && sch.deschis === true) {
     const cand = sch.minut === 0 ? (sch.zileDupa <= 1 ? "la miezul nopții" : numeZi(sch.zileDupa - 1, acum) + " la miezul nopții")
                                  : (sch.zileDupa > 0 ? numeZi(sch.zileDupa, acum) + " la " : "la ") + formatOra(sch.minut);
+    const rest = sch.zileDupa === 0 ? sch.minut - (acum.getHours() * 60 + acum.getMinutes()) : 9999;
+    if (rest > 0 && rest <= 45) return '<span class="curand">🟠 Se închide în ' + rest + ' min</span> · la ' + formatOra(sch.minut) + sarb + brut;
     return '<span class="deschis">🟢 Deschis acum</span> · închide ' + cand + sarb + brut;
   }
   if (sch && sch.deschis === false && !sch.niciodata) {
@@ -1829,6 +1870,42 @@ window.addEventListener("offline", stareRetea);
 /* =====================================================================
    PARTEA 12 – BUTOANELE DE SUS ȘI PORNIREA
    ===================================================================== */
+// --- Zone salvate (ex. Istanbul, Roma): o atingere și te mută acolo ---
+let zoneSalvate = [];
+try { const z = JSON.parse(localStorage.getItem("mancare_v1_zone")); if (Array.isArray(z)) zoneSalvate = z.filter(x => x && typeof x.nume === "string" && isFinite(x.lat) && isFinite(x.lon)).slice(0, 6); } catch (e) {}
+function numeScurtZona(c) {
+  const e = (c && c.eticheta) || "";
+  if (!e || /^locația ta$/i.test(e)) return "Zona mea";
+  return e.split(",").slice(0, 2).map(x => x.trim()).filter(Boolean).join(", ").slice(0, 28);
+}
+function arataZoneSalvate() {
+  const cutie = $("zoneSalvate");
+  cutie.textContent = "";
+  zoneSalvate.forEach((z, i) => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "zn"; b.textContent = "📍 " + z.nume;
+    b.addEventListener("click", () => ruleaza(async () => {
+      ascundeSugestii(); el.foame.innerHTML = "";
+      centru = { lat: z.lat, lon: z.lon, eticheta: z.nume }; el.zona.value = z.nume;
+      await cautaLocuri();
+    }));
+    const x = document.createElement("button"); x.type = "button"; x.className = "zx"; x.textContent = "✕"; x.setAttribute("aria-label", "Șterge zona " + z.nume);
+    x.addEventListener("click", () => { zoneSalvate.splice(i, 1); scrieZone(); arataZoneSalvate(); });
+    cutie.append(b, x);
+  });
+  cutie.hidden = zoneSalvate.length === 0;
+}
+function scrieZone() { try { localStorage.setItem("mancare_v1_zone", JSON.stringify(zoneSalvate)); } catch (e) {} }
+$("btnSalveazaZona").addEventListener("click", () => {
+  if (!centru) return;
+  const nume = numeScurtZona(centru);
+  zoneSalvate = zoneSalvate.filter(z => !(Math.abs(z.lat - centru.lat) < 0.002 && Math.abs(z.lon - centru.lon) < 0.002));
+  zoneSalvate.unshift({ nume, lat: centru.lat, lon: centru.lon });
+  zoneSalvate = zoneSalvate.slice(0, 6);
+  scrieZone(); arataZoneSalvate();
+  setStare("✔ Am salvat „" + nume + "”. O găsești ca buton în panoul de căutare.", "ok");
+});
+arataZoneSalvate();
+
 el.btnGps.addEventListener("click", () => ruleaza(async () => {
   ascundeSugestii(); el.foame.innerHTML = "";
   setStare("Aștept permisiunea de a-ți afla locația…", "info");
@@ -1882,12 +1959,31 @@ el.btnRefresh.addEventListener("click", () => { if (centru) ruleaza(() => cautaL
 
 
 // 🌾 Texte gata făcute pentru personal (turcă, italiană, engleză, română)
-const TEXTE_CERERE = {
-  tr: "Kardeşim çölyak hastası. Çok az gluten bile onu ciddi şekilde hasta eder. Mutfak glutensiz basit bir yemek hazırlayabilir mi? Marinesiz, unsuz ve sossuz, temiz bir tavada veya ızgarada, temiz malzemelerle pişirilmiş sade tavuk (veya et ya da balık); yanında şehriyesiz sade pilav, haşlanmış ya da fırında patates, veya sadece zeytinyağı ve limonlu salata. Çapraz bulaşma olmasın, lütfen. Teşekkür ederim!",
-  it: "Mio fratello è celiaco. Anche piccole quantità di glutine lo fanno stare molto male. La cucina può preparare qualcosa di semplice senza glutine? Per esempio pollo (o carne o pesce) alla griglia, senza marinatura, senza farina e senza salse, cotto su una padella o una piastra pulita con utensili puliti, con riso in bianco, patate lesse o al forno, oppure insalata condita solo con olio e limone. Senza contaminazione, per favore. Grazie!",
-  en: "My brother has celiac disease. Even tiny amounts of gluten make him seriously ill. Could the kitchen make something simple without gluten? For example plain grilled chicken (or meat or fish) with no marinade, no flour and no sauce, cooked on a clean pan or griddle with clean utensils, served with plain rice (no orzo or vermicelli), boiled or baked potatoes, or a salad with just oil and lemon. No cross-contamination, please. Thank you!",
-  ro: "Fratele meu are boală celiacă. Chiar și cantități mici de gluten îl îmbolnăvesc serios. Poate bucătăria să pregătească ceva simplu, fără gluten? De exemplu pui (sau carne ori pește) la grătar, fără marinadă, fără făină și fără sos, gătit într-o tigaie sau pe o plită curată, cu ustensile curate, cu orez simplu (fără tăiței sau șehriye), cartofi fierți sau la cuptor, ori o salată doar cu ulei și lămâie. Fără contaminare încrucișată, vă rog. Mulțumesc!"
-};
+// Profilul cererii: cine are nevoie (eu / altcineva) și, doar pentru italiană, genul
+let profilCerere = { cine: "eu", gen: "m" };
+try { const p = JSON.parse(localStorage.getItem("mancare_v1_cerere")); if (p && (p.cine === "eu" || p.cine === "alt")) profilCerere = { cine: p.cine, gen: p.gen === "f" ? "f" : "m" }; } catch (e) {}
+function textCerere(l) {
+  const eu = profilCerere.cine === "eu", f = profilCerere.gen === "f";
+  const T = {
+    tr: (eu ? "Çölyak hastasıyım. Gluten yiyemem: buğday, arpa, çavdar, un, ekmek, makarna. Çok az gluten bile beni ciddi şekilde hasta eder."
+            : "Yanımdaki kişi çölyak hastası. Gluten yiyemez: buğday, arpa, çavdar, un, ekmek, makarna. Çok az gluten bile onu ciddi şekilde hasta eder.") +
+        " Mutfak glutensiz basit bir yemek hazırlayabilir mi? Marinesiz, unsuz ve sossuz, temiz bir tavada veya ızgarada, temiz malzemelerle pişirilmiş sade et, tavuk ya da balık; yanında şehriyesiz sade pilav, haşlanmış veya fırında patates ya da sadece zeytinyağı ve limonlu salata olabilir. Unlu ürünlerin kızartıldığı yağda kızartma olmasın. Çapraz bulaşma olmasın, lütfen. Teşekkür ederim!",
+    it: (eu ? "Sono celiac" + (f ? "a" : "o") + ". Non posso mangiare glutine: grano, farro, orzo, segale, farina, pane, pasta. Anche piccole tracce mi fanno stare molto male."
+            : "La persona con me è celiac" + (f ? "a" : "o") + ". Non può mangiare glutine: grano, farro, orzo, segale, farina, pane, pasta. Anche piccole tracce " + (f ? "la" : "lo") + " fanno stare molto male.") +
+        " La cucina può preparare qualcosa di semplice senza glutine? Per esempio carne o pesce alla griglia, senza marinatura, senza farina e senza salse, cotti su una padella o una piastra pulita con utensili puliti; con riso in bianco, patate lesse o al forno, oppure insalata condita solo con olio e limone. Niente fritture nello stesso olio dove si friggono cibi infarinati. Senza contaminazione, per favore. Grazie!",
+    en: (eu ? "I have celiac disease. I can't eat gluten: wheat, barley, rye, flour, bread, pasta. Even tiny traces make me seriously ill."
+            : "The person with me has celiac disease. They can't eat gluten: wheat, barley, rye, flour, bread, pasta. Even tiny traces make them seriously ill.") +
+        " Could the kitchen make something simple without gluten? For example plain grilled meat or fish with no marinade, no flour and no sauce, cooked on a clean pan or griddle with clean utensils, with plain rice (no orzo or vermicelli), boiled or baked potatoes, or a salad with just oil and lemon. No frying in oil that is also used for floured foods. No cross-contamination, please. Thank you!",
+    ro: (eu ? "Am boală celiacă. Nu pot mânca gluten: grâu, orz, secară, făină, pâine, paste. Chiar și urme mici de gluten mă îmbolnăvesc serios."
+            : "Persoana care e cu mine are boală celiacă. Nu poate mânca gluten: grâu, orz, secară, făină, pâine, paste. Chiar și urme mici de gluten o îmbolnăvesc serios.") +
+        " Poate bucătăria să pregătească ceva simplu, fără gluten? De exemplu carne sau pește la grătar, fără marinadă, fără făină și fără sos, gătite într-o tigaie sau pe o plită curată, cu ustensile curate; cu orez simplu (fără tăiței sau șehriye), cartofi fierți sau la cuptor, ori o salată doar cu ulei și lămâie. Fără prăjire în ulei în care se prăjesc și produse cu făină. Fără contaminare încrucișată, vă rog. Mulțumesc!"
+  };
+  return T[l];
+}
+function sincronizeazaProfilCerere() {
+  document.querySelectorAll(".selCine").forEach(x => { x.value = profilCerere.cine; });
+  document.querySelectorAll(".selGen").forEach(x => { x.value = profilCerere.gen; });
+}
 // Limba potrivită după țara locului căutat
 function limbaImplicita() {
   const t = centru && centru.eticheta ? centru.eticheta : "";
@@ -1897,15 +1993,22 @@ function limbaImplicita() {
 }
 function arataTextCerere() {
   const l = el.limbaCerere.value;
-  el.textCerere.textContent = TEXTE_CERERE[l];
+  el.textCerere.textContent = textCerere(l);
   el.textCerere.setAttribute("lang", l);
+  document.querySelectorAll("#ghidCerere .spGen").forEach(x => { x.hidden = l !== "it"; });
 }
 el.ghidCerere.addEventListener("toggle", () => {
   if (el.ghidCerere.open) { el.limbaCerere.value = limbaImplicita(); arataTextCerere(); }
 });
 el.limbaCerere.addEventListener("change", arataTextCerere);
+document.querySelectorAll(".selCine, .selGen").forEach(x => x.addEventListener("change", ev => {
+  if (ev.target.classList.contains("selCine")) profilCerere.cine = ev.target.value; else profilCerere.gen = ev.target.value;
+  try { localStorage.setItem("mancare_v1_cerere", JSON.stringify(profilCerere)); } catch (e) {}
+  sincronizeazaProfilCerere(); arataTextCerere(); if (!el.bannerTara.hidden) actualizeazaTara();
+}));
+sincronizeazaProfilCerere();
 el.btnCopiazaCerere.addEventListener("click", async () => {
-  const ok = await copiaza(TEXTE_CERERE[el.limbaCerere.value]);
+  const ok = await copiaza(textCerere(el.limbaCerere.value));
   setStare(ok ? "✔ Am copiat textul. Lipește-l într-un mesaj sau arată-l personalului." : "Nu am putut copia automat. Ține apăsat pe text și alege Copiază.", ok ? "ok" : "atentie");
 });
 
@@ -1945,8 +2048,9 @@ el.fDist.addEventListener("change", () => {
   if (el.fDist.value === "alta") el.fDistAlta.focus();
 });
 const refiltreaza = () => { cateAfisate = PE_PAGINA; afiseaza(); };
-[el.fTip, el.fDist, el.fDeschis, el.fFav, el.fGluten, el.fSort].forEach(x => x.addEventListener("change", () => {
+[el.fTip, el.fDist, el.fDeschis, el.fFav, el.fGluten, el.fSort, el.fDieta].forEach(x => x.addEventListener("change", () => {
   el.notaGluten.hidden = !el.fGluten.checked;
+  $("notaDieta").hidden = !el.fDieta.value;
   refiltreaza();
   if (x === el.fSort) salveazaPreferinte();
 }));
@@ -2019,7 +2123,8 @@ function actualizeazaIndicator() {
   const carduri = el.lista.children;
   const n = carduri.length;
   const y = window.scrollY || 0;
-  const aratat = n > 1 && y > 40;
+  const sus0 = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--sus")) || 0;
+  const aratat = n > 1 && el.lista.getBoundingClientRect().top < sus0 - 8;
   ind.hidden = !aratat; progres.style.transform = "scaleX(0)";
   if (!aratat) return;
   const sus = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--sus")) || 0;
@@ -2121,14 +2226,15 @@ function actualizeazaTara() {
   const t = taraLocului();
   if (!t || ascunseTara[t]) { el.bannerTara.hidden = true; return; }
   el.titluTara.textContent = "Ești " + NUME_TARA[t] + ": cererea pentru personal, în " + (t === "it" ? "italiană" : "turcă");
-  el.textTara.textContent = TEXTE_CERERE[t];
+  el.textTara.textContent = textCerere(t);
+  document.querySelectorAll("#bannerTara .spGen").forEach(x => { x.hidden = t !== "it"; });
   el.textTara.setAttribute("lang", t);
   el.bannerTara.dataset.tara = t;
   el.bannerTara.hidden = false;
 }
 $("btnAscundeTara").addEventListener("click", () => { ascunseTara[el.bannerTara.dataset.tara] = true; el.bannerTara.hidden = true; });
 $("btnCopiazaTara").addEventListener("click", async () => {
-  const ok = await copiaza(TEXTE_CERERE[el.bannerTara.dataset.tara]);
+  const ok = await copiaza(textCerere(el.bannerTara.dataset.tara));
   setStare(ok ? "✔ Am copiat textul. Lipește-l într-un mesaj sau arată-l personalului." : "Nu am putut copia automat. Ține apăsat pe text și alege Copiază.", ok ? "ok" : "atentie");
 });
 actualizeazaTara();
